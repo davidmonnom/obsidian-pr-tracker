@@ -1,4 +1,4 @@
-# Obsidian PR Tracker
+# Github PR Tracker
 
 An Obsidian plugin that tracks GitHub pull requests in a sidebar panel.
 Keep an eye on your open reviews without leaving your notes.

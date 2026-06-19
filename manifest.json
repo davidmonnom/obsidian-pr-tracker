@@ -3,7 +3,7 @@
 	"name": "Github PR Tracker",
 	"version": "1.0.0",
 	"minAppVersion": "1.11.4",
-	"description": "Track and manage GitHub pull request reviews directly from Obsidian.",
+	"description": "Track and manage GitHub pull request reviews.",
 	"author": "David Monnom",
 	"authorUrl": "https://www.david-monnom.be/",
 	"isDesktopOnly": true
