@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-pr-tracker",
+	"name": "github-pr-tracker",
 	"version": "1.0.0",
 	"description": "Manage GitHub pull request reviews directly from Obsidian.",
 	"main": "main.js",
