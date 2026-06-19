@@ -103,6 +103,15 @@ export function PrItem({ entry }: PrItemProps) {
 				<span>{pr.author}</span>
 				<span className="pr-meta-dot">·</span>
 				<span title="Opened">{relativeDate(pr.createdAt)}</span>
+				<span className="pr-meta-dot">·</span>
+				<span className="pr-diff-add" title="Additions">+{pr.additions}</span>
+				<span className="pr-diff-del" title="Deletions">−{pr.deletions}</span>
+				{pr.comments > 0 && (
+					<>
+						<span className="pr-meta-dot">·</span>
+						<span title="Comments">{pr.comments} {pr.comments === 1 ? 'comment' : 'comments'}</span>
+					</>
+				)}
 				{pr.lastRefreshedAt && (
 					<>
 						<span className="pr-meta-dot">·</span>

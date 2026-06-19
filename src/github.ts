@@ -26,6 +26,8 @@ interface GithubPR {
 	additions: number;
 	deletions: number;
 	changed_files: number;
+	comments: number;
+	review_comments: number;
 	head: { sha: string };
 }
 
@@ -57,6 +59,7 @@ export interface PullRequestInfo {
 	additions: number;
 	deletions: number;
 	changedFiles: number;
+	comments: number;
 	ciStatus: CIStatus;
 }
 
@@ -247,6 +250,7 @@ export class GithubClient {
 			additions: pr.additions,
 			deletions: pr.deletions,
 			changedFiles: pr.changed_files,
+			comments: pr.comments + pr.review_comments,
 			ciStatus,
 		};
 
