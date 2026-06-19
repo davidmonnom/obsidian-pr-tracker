@@ -8,23 +8,11 @@ export const PR_LIST_VIEW_TYPE = 'github-pr-list';
 
 export class PrListView extends ItemView {
 	private github: GithubClient;
-	private getPRUrls: () => string[];
-	private addPRUrl: (url: string) => Promise<void>;
-	private removePRUrl: (url: string) => Promise<void>;
 	private root: Root | null = null;
 
-	constructor(
-		leaf: WorkspaceLeaf,
-		github: GithubClient,
-		getPRUrls: () => string[],
-		addPRUrl: (url: string) => Promise<void>,
-		removePRUrl: (url: string) => Promise<void>,
-	) {
+	constructor(leaf: WorkspaceLeaf, github: GithubClient) {
 		super(leaf);
 		this.github = github;
-		this.getPRUrls = getPRUrls;
-		this.addPRUrl = addPRUrl;
-		this.removePRUrl = removePRUrl;
 	}
 
 	getViewType(): string {
@@ -43,13 +31,7 @@ export class PrListView extends ItemView {
 		this.root = createRoot(this.contentEl);
 		this.root.render(
 			<ErrorBoundary>
-				<PrListComponent
-					github={this.github}
-					getPRUrls={this.getPRUrls}
-					onAddPR={this.addPRUrl}
-					onRemovePR={this.removePRUrl}
-					app={this.app}
-				/>
+				<PrListComponent github={this.github} app={this.app} />
 			</ErrorBoundary>,
 		);
 	}

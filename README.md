@@ -6,6 +6,8 @@ Keep an eye on your open reviews without leaving your notes.
 The CI feature is optimized for custom CI pipelines that report
 their status to github.
 
+![Obsidian PR Tracker sidebar showing open and closed pull requests](screenshots/obsidian.png)
+
 ## Features
 
 - **Sidebar panel** — dedicated view listing all tracked PRs grouped by status (Open / Closed)

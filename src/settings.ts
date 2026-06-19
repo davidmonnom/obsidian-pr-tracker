@@ -1,14 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import GithubReviewManager from './main';
 
-export interface GithubReviewManagerSettings {
-	trackedPRs: string[];
-}
-
-export const DEFAULT_SETTINGS: GithubReviewManagerSettings = {
-	trackedPRs: [],
-};
-
 const SECRET_ID = 'github-pat';
 
 export class GithubReviewManagerSettingTab extends PluginSettingTab {

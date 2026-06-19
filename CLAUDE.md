@@ -6,9 +6,9 @@ An Obsidian plugin that tracks GitHub pull requests in a sidebar view, showing s
 
 ```
 src/
-├── main.ts                        # Plugin entry point — registers view, ribbon, command, settings tab
-├── github.ts                      # GithubClient: REST API calls + URL parsing. Types: PullRequestInfo, ReviewerInfo, ParsedPRUrl, CIStatus
-├── settings.ts                    # Plugin settings interface, default values, SettingTab, loadToken()
+├── main.ts                        # Plugin entry point — loads persisted data, constructs GithubClient, registers view/ribbon/command/settings
+├── github.ts                      # GithubClient: owns tracked PRs, cache, and persistence. Types: PullRequestInfo, ReviewerInfo, ParsedPRUrl, CIStatus, PersistedData
+├── settings.ts                    # SettingTab (token UI only), loadToken()
 ├── types.ts                       # Shared React types: PREntry (loading/refreshing/loaded/error), LoadedEntry
 │
 ├── components/                    # Pure React components (no Obsidian ItemView/Modal)
@@ -45,9 +45,14 @@ src/
 
 ## Key design decisions
 
-- GitHub token is stored in Obsidian's `secretStorage` (system keychain), never written to disk.
+- **`GithubClient` is the single source of truth** — it owns tracked PR URLs, the fetch cache, and all persistence. No data is threaded through props; components interact exclusively via the `github` instance.
+- `PrListView` takes only `(leaf, github)`. `PrListComponent` props are `{ github, app }`.
+- `GithubClient` public API: `getTrackedPRs()`, `addPR(url)`, `removePR(url)`, `getCached(url)`, `setToken(token)`, `fetchPullRequest(owner, repo, prNumber)`, `static parsePRUrl(url)`.
+- `addPR`/`removePR`/`fetchPullRequest` all call an internal `notify()` which fires the `onDataChange` callback — `main.ts` passes `(data) => void this.saveData(data)` to persist the full state to `data.json` on every change.
+- The cache persists across Obsidian restarts (stored in `data.json` as `prCache`). On startup, `GithubClient` is initialised with the saved `PersistedData`. Closed PRs therefore load instantly from cache and are never re-fetched.
+- GitHub token is stored in Obsidian's `secretStorage` (system keychain), never in `data.json`.
 - PR entries use a discriminated union (`PREntry`) with four statuses: `loading`, `refreshing`, `loaded`, `error`. The `refreshing` status keeps old data visible during a background re-fetch to avoid flicker.
-- `PrListComponent` owns all state. `PrListView` is a thin Obsidian shell that only mounts/unmounts the React tree.
+- `PrListComponent` owns all React state. `PrListView` is a thin Obsidian shell that only mounts/unmounts the React tree.
 - Closed PRs are never re-fetched — `fetchAll` skips them and their refresh button is hidden.
 - CI status uses the GitHub Commit Statuses API (`GET /repos/{owner}/{repo}/commits/{sha}/status`), not Check Runs. This supports custom CI systems (e.g. Odoo runbot) that report via the older statuses API. A 403/404 or empty `total_count` gracefully becomes `'none'`.
 - Concurrency is capped at 5 parallel fetches via `createLimiter(5)` in `utils/concurrency.ts`.

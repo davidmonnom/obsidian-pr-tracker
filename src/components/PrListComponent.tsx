@@ -10,20 +10,18 @@ import { AddPrModal } from '../views/AddPrModal';
 
 export interface PrListProps {
 	github: GithubClient;
-	getPRUrls: () => string[];
-	onAddPR: (url: string) => Promise<void>;
-	onRemovePR: (url: string) => Promise<void>;
 	app: App;
 }
 
-export function PrListComponent({
-	github,
-	getPRUrls,
-	onAddPR,
-	onRemovePR,
-	app,
-}: PrListProps) {
-	const [entries, setEntries] = useState<PREntry[]>([]);
+export function PrListComponent({ github, app }: PrListProps) {
+	const [entries, setEntries] = useState<PREntry[]>(() =>
+		github.getTrackedPRs().map((url) => {
+			const cached = github.getCached(url);
+			return cached
+				? { url, status: 'loaded', data: cached }
+				: { url, status: 'loading' };
+		}),
+	);
 	const abortRef = useRef<AbortController | null>(null);
 	const limiterRef = useRef(createLimiter(5));
 	const entriesRef = useRef<PREntry[]>([]);
@@ -45,14 +43,12 @@ export function PrListComponent({
 						return e;
 					}
 
-					if (!parsed) {
+					if (!parsed)
 						return {
 							url,
 							status: 'error',
 							error: 'Invalid GitHub PR URL',
 						};
-					}
-
 					return e.status === 'loaded' || e.status === 'refreshing'
 						? { url, status: 'refreshing', data: e.data }
 						: { url, status: 'loading' };
@@ -102,7 +98,7 @@ export function PrListComponent({
 	// Preserve loaded data as 'refreshing' on full refresh avoids blanking the whole list.
 	// Closed PRs are skipped — their state won't change.
 	const fetchAll = useCallback(() => {
-		const urls = getPRUrls();
+		const urls = github.getTrackedPRs();
 		setEntries((prev) =>
 			urls.map((url) => {
 				const pr = prev.find((e) => e.url === url);
@@ -126,7 +122,7 @@ export function PrListComponent({
 				e.data.state !== 'open';
 			if (!isClosed) void limiterRef.current(() => fetchOne(url));
 		}
-	}, [getPRUrls, fetchOne]);
+	}, [github, fetchOne]);
 
 	// Initial load on mount only.
 	const fetchAllRef = useRef(fetchAll);
@@ -137,24 +133,24 @@ export function PrListComponent({
 
 	const handleAdd = useCallback(
 		async (url: string) => {
-			await onAddPR(url);
+			github.addPR(url);
 			setEntries((prev) => [...prev, { url, status: 'loading' }]);
 			void limiterRef.current(() => fetchOne(url));
 		},
-		[onAddPR, fetchOne],
+		[github, fetchOne],
 	);
 
 	const handleRemove = useCallback(
-		async (url: string) => {
+		(url: string) => {
+			github.removePR(url);
 			setEntries((prev) => prev.filter((e) => e.url !== url));
-			await onRemovePR(url);
 		},
-		[onRemovePR],
+		[github],
 	);
 
 	const openAddModal = useCallback(() => {
-		new AddPrModal(app, getPRUrls(), handleAdd).open();
-	}, [app, getPRUrls, handleAdd]);
+		new AddPrModal(app, github.getTrackedPRs(), handleAdd).open();
+	}, [app, github, handleAdd]);
 
 	const byUpdated = (a: LoadedEntry, b: LoadedEntry) =>
 		b.data.updatedAt.localeCompare(a.data.updatedAt);
@@ -167,10 +163,9 @@ export function PrListComponent({
 				} else if (e.status === 'error') {
 					acc.errorEntries.push(e);
 				} else if (e.status === 'loaded' || e.status === 'refreshing') {
-					(e.data.state === 'open'
-						? acc.openEntries
-						: acc.closedEntries
-					).push(e);
+					const isOpen = e.data.state === 'open';
+					const data = isOpen ? acc.openEntries : acc.closedEntries;
+					data.push(e);
 				}
 				return acc;
 			},
@@ -236,7 +231,7 @@ export function PrListComponent({
 						title="Open"
 						entries={openEntries}
 						onRefresh={(url) => void fetchOne(url)}
-						onRemove={(url) => void handleRemove(url)}
+						onRemove={(url) => handleRemove(url)}
 					/>
 				)}
 
@@ -245,7 +240,7 @@ export function PrListComponent({
 						title="Closed"
 						entries={closedEntries}
 						onRefresh={(url) => void fetchOne(url)}
-						onRemove={(url) => void handleRemove(url)}
+						onRemove={(url) => handleRemove(url)}
 					/>
 				)}
 
@@ -264,7 +259,7 @@ export function PrListComponent({
 								key={e.url}
 								entry={e}
 								onRetry={() => void fetchOne(e.url)}
-								onRemove={() => void handleRemove(e.url)}
+								onRemove={() => handleRemove(e.url)}
 							/>
 						))}
 					</div>

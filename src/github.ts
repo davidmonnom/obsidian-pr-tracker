@@ -65,13 +65,28 @@ export interface ParsedPRUrl {
 	prNumber: string;
 }
 
+export interface PersistedData {
+	trackedPRs: string[];
+	prCache: Record<string, PullRequestInfo>;
+}
+
+type OnDataChange = (data: PersistedData) => void;
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function computeCIStatus(combined: GithubCombinedStatus): CIStatus {
-	if (combined.total_count === 0) return 'none';
-	if (combined.state === 'success') return 'success';
-	if (combined.state === 'failure' || combined.state === 'error')
+	if (combined.total_count === 0) {
+		return 'none';
+	}
+
+	if (combined.state === 'success') {
+		return 'success';
+	}
+
+	if (combined.state === 'failure' || combined.state === 'error') {
 		return 'failure';
+	}
+
 	return 'pending';
 }
 
@@ -79,19 +94,71 @@ function computeCIStatus(combined: GithubCombinedStatus): CIStatus {
 
 export class GithubClient {
 	private token: string;
+	private trackedPRs: string[];
+	private cache: Map<string, PullRequestInfo>;
+	private onDataChange?: OnDataChange;
 
-	constructor(token: string) {
+	constructor(
+		token: string,
+		initialData: Partial<PersistedData> = {},
+		onDataChange?: OnDataChange,
+	) {
 		this.token = token;
+		this.trackedPRs = [...(initialData.trackedPRs ?? [])];
+		this.cache = new Map(Object.entries(initialData.prCache ?? {}));
+		this.onDataChange = onDataChange;
 	}
+
+	// ── Tracked PRs ───────────────────────────────────────────────────────────
+
+	getTrackedPRs(): string[] {
+		return [...this.trackedPRs];
+	}
+
+	addPR(url: string): void {
+		this.trackedPRs.push(url);
+		this.notify();
+	}
+
+	removePR(url: string): void {
+		this.trackedPRs = this.trackedPRs.filter((u) => u !== url);
+		this.cache.delete(this.normalizeUrl(url));
+		this.notify();
+	}
+
+	// ── Cache ─────────────────────────────────────────────────────────────────
+
+	getCached(url: string): PullRequestInfo | undefined {
+		return this.cache.get(this.normalizeUrl(url));
+	}
+
+	// ── Token ─────────────────────────────────────────────────────────────────
 
 	setToken(token: string): void {
 		this.token = token;
 	}
 
+	// ── URL helpers ───────────────────────────────────────────────────────────
+
 	static parsePRUrl(url: string): ParsedPRUrl | null {
 		const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
 		if (!match || !match[1] || !match[2] || !match[3]) return null;
 		return { owner: match[1], repo: match[2], prNumber: match[3] };
+	}
+
+	private normalizeUrl(url: string): string {
+		const parsed = GithubClient.parsePRUrl(url);
+		if (!parsed) return url;
+		return `https://github.com/${parsed.owner}/${parsed.repo}/pull/${parsed.prNumber}`;
+	}
+
+	// ── Internals ─────────────────────────────────────────────────────────────
+
+	private notify(): void {
+		this.onDataChange?.({
+			trackedPRs: [...this.trackedPRs],
+			prCache: Object.fromEntries(this.cache),
+		});
 	}
 
 	private get headers(): Record<string, string> {
@@ -102,6 +169,8 @@ export class GithubClient {
 		return h;
 	}
 
+	// ── Fetch ─────────────────────────────────────────────────────────────────
+
 	async fetchPullRequest(
 		owner: string,
 		repo: string,
@@ -110,7 +179,7 @@ export class GithubClient {
 		const base = `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`;
 		const { headers } = this;
 
-		// Fetch PR first — head SHA is needed to query check-runs.
+		// Fetch PR first — head SHA is needed to query commit status.
 		const prRes = await requestUrl({ url: base, headers });
 		if (prRes.status < 200 || prRes.status >= 300) {
 			const msg =
@@ -161,7 +230,7 @@ export class GithubClient {
 			committerSet.add(login);
 		}
 
-		return {
+		const result: PullRequestInfo = {
 			title: pr.title,
 			state: pr.state,
 			author: pr.user.login,
@@ -178,5 +247,10 @@ export class GithubClient {
 			changedFiles: pr.changed_files,
 			ciStatus,
 		};
+
+		this.cache.set(result.prUrl, result);
+		this.notify();
+
+		return result;
 	}
 }
