@@ -49,6 +49,7 @@ export interface PullRequestInfo {
 	author: string;
 	createdAt: string;
 	updatedAt: string;
+	lastRefreshedAt: string;
 	prUrl: string;
 	reviewers: ReviewerInfo[];
 	committers: string[];
@@ -236,6 +237,7 @@ export class GithubClient {
 			author: pr.user.login,
 			createdAt: pr.created_at,
 			updatedAt: pr.updated_at,
+			lastRefreshedAt: new Date().toISOString(),
 			prUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}`,
 			reviewers: Array.from(reviewerMap.entries()).map(
 				([login, state]) => ({ login, state }),

@@ -124,13 +124,6 @@ export function PrListComponent({ github, app }: PrListProps) {
 		}
 	}, [github, fetchOne]);
 
-	// Initial load on mount only.
-	const fetchAllRef = useRef(fetchAll);
-	fetchAllRef.current = fetchAll;
-	useEffect(() => {
-		fetchAllRef.current();
-	}, []);
-
 	const handleAdd = useCallback(
 		async (url: string) => {
 			github.addPR(url);

@@ -294,6 +294,11 @@
 	flex-shrink: 0;
 }
 
+.pr-synced-at {
+	opacity: 0.55;
+	font-style: italic;
+}
+
 .pr-list-item-error-msg {
 	padding-left: 14px;
 	font-size: var(--font-ui-smaller);

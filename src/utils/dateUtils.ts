@@ -1,6 +1,12 @@
+export function minutesAgo(isoDate: string): string {
+	const diffMs = Date.now() - new Date(isoDate).getTime();
+	const mins = Math.floor(diffMs / 60000);
+	return mins < 1 ? '< 1m ago' : `${mins}m ago`;
+}
+
 export function relativeDate(isoDate: string): string {
 	const diffMs = Date.now() - new Date(isoDate).getTime();
-	const diffDays = Math.floor(diffMs / 86_400_000);
+	const diffDays = Math.floor(diffMs / 86400000);
 	const diffMonths = Math.floor(diffDays / 30.44);
 
 	if (diffDays === 0) {

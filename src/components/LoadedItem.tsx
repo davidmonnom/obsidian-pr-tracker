@@ -1,6 +1,6 @@
 import { GithubClient } from '../github';
 import { LoadedEntry } from '../types';
-import { relativeDate } from '../utils/dateUtils';
+import { relativeDate, minutesAgo } from '../utils/dateUtils';
 import { Icon } from './Icon';
 import { ReviewPills } from './ReviewPills';
 
@@ -59,7 +59,15 @@ export function LoadedItem({ entry, onRefresh, onRemove }: LoadedItemProps) {
 				)}
 				<span>{pr.author}</span>
 				<span className="pr-meta-dot">·</span>
-				<span>{relativeDate(pr.updatedAt)}</span>
+				<span title="Opened">{relativeDate(pr.createdAt)}</span>
+				{pr.lastRefreshedAt && (
+					<>
+						<span className="pr-meta-dot">·</span>
+						<span className="pr-synced-at" title="Last synced">
+							{minutesAgo(pr.lastRefreshedAt)}
+						</span>
+					</>
+				)}
 				{pr.ciStatus !== 'none' && (
 					<>
 						<span className="pr-meta-dot">·</span>
