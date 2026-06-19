@@ -1,41 +1,43 @@
 import { ReviewerInfo } from '../github';
 
+interface ReviewState {
+	approved: number;
+	changes: number;
+	pending: number;
+}
+
+function countStates(reviewers: ReviewerInfo[]): ReviewState {
+	return {
+		approved: reviewers.filter((r) => r.state === 'APPROVED').length,
+		pending: reviewers.filter((r) => r.state === 'PENDING').length,
+		changes: reviewers.filter((r) => r.state === 'CHANGES_REQUESTED')
+			.length,
+	};
+}
+
 export function ReviewPills({ reviewers }: { reviewers: ReviewerInfo[] }) {
-	const approved = reviewers.filter((r) => r.state === 'APPROVED').length;
-	const pending = reviewers.filter((r) => r.state === 'PENDING').length;
-	const changes = reviewers.filter(
-		(r) => r.state === 'CHANGES_REQUESTED',
-	).length;
+	const { approved, changes, pending } = countStates(reviewers);
 
-	if (approved === 0 && changes === 0 && pending === 0) {
-		return null;
+	if (approved === 0 && changes === 0 && pending === 0) return null;
+
+	// Show the most severe state only — changes-requested beats approved beats pending.
+	if (changes > 0) {
+		return (
+			<span className="pr-review-pill pr-review-pill--changes">
+				✗ {changes}
+			</span>
+		);
 	}
-
-	const getLabel = (): string => {
-		if (approved > 0) {
-			return `✓ ${approved}`;
-		} else if (changes > 0) {
-			return `✗ ${changes} `;
-		} else if (pending > 0) {
-			return `○ ${pending}`;
-		}
-		return '';
-	};
-
-	const getClassName = (): string => {
-		if (approved > 0) {
-			return 'pr-review-pill pr-review-pill--approved';
-		} else if (changes > 0) {
-			return 'pr-review-pill pr-review-pill--changes';
-		} else if (pending > 0) {
-			return 'pr-review-pill pr-review-pill--pending';
-		}
-		return '';
-	};
-
+	if (approved > 0) {
+		return (
+			<span className="pr-review-pill pr-review-pill--approved">
+				✓ {approved}
+			</span>
+		);
+	}
 	return (
-		<span aria-label={`${approved} approved`} className={getClassName()}>
-			{getLabel()}
+		<span className="pr-review-pill pr-review-pill--pending">
+			○ {pending}
 		</span>
 	);
 }

@@ -338,6 +338,12 @@
 
 /* ── Diff stats ────────────────────────────────────────────────────────────── */
 
+.pr-diff-stats {
+	display: flex;
+	gap: 3px;
+	flex-shrink: 0;
+}
+
 .pr-diff-add {
 	color: #3fb950;
 	font-weight: 500;
@@ -351,12 +357,26 @@
 /* ── CI status badge ───────────────────────────────────────────────────────── */
 
 .pr-ci-badge {
-	font-size: var(--font-ui-smaller);
-	font-weight: 500;
+	font-size: 10px;
+	font-weight: 600;
+	padding: 1px 5px;
+	border-radius: 10px;
+	line-height: 1.6;
 	white-space: nowrap;
 	flex-shrink: 0;
 }
 
-.pr-ci-badge--success { color: #3fb950; }
-.pr-ci-badge--failure { color: #f85149; }
-.pr-ci-badge--pending { color: #d29922; }
+.pr-ci-badge--success {
+	background: rgba(63, 185, 80, 0.12);
+	color: #3fb950;
+}
+
+.pr-ci-badge--failure {
+	background: rgba(248, 81, 73, 0.1);
+	color: #f85149;
+}
+
+.pr-ci-badge--pending {
+	background: rgba(187, 128, 9, 0.1);
+	color: #d29922;
+}

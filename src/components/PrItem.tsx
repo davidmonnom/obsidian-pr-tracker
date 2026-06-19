@@ -27,7 +27,7 @@ export function PrItem({ entry }: PrItemProps) {
 					<button
 						className="pr-list-icon-btn pr-list-item-action"
 						aria-label="Retry"
-						onClick={() => void refreshPr(entry.url)}
+						onClick={() => void refreshPr(entry.url, true)}
 					>
 						<Icon name="rotate-cw" />
 					</button>
@@ -44,20 +44,15 @@ export function PrItem({ entry }: PrItemProps) {
 		);
 	}
 
-	const getCIStatusIcon = (ciStatus: string) => {
-		switch (ciStatus) {
-			case 'success':
-				return '✓';
-			case 'failure':
-				return '✗';
-			case 'pending':
-				return '●';
-			default:
-				return '';
-		}
-	};
-
 	const pr = entry.data;
+
+	const ciLabel =
+		pr.ciStatus === 'success'
+			? '✓ CI'
+			: pr.ciStatus === 'failure'
+				? '✗ CI'
+				: '● CI';
+
 	return (
 		<div className="pr-list-item">
 			<div className="pr-list-item-row1">
@@ -71,11 +66,16 @@ export function PrItem({ entry }: PrItemProps) {
 					{pr.title}
 				</a>
 				<ReviewPills reviewers={pr.reviewers} />
+				{pr.ciStatus !== 'none' && (
+					<span className={`pr-ci-badge pr-ci-badge--${pr.ciStatus}`}>
+						{ciLabel}
+					</span>
+				)}
 				{pr.state === 'open' && (
 					<button
 						className={`pr-list-icon-btn pr-list-item-action${isRefreshing ? ' pr-list-item-action--spinning' : ''}`}
 						aria-label="Refresh"
-						onClick={() => void refreshPr(entry.url)}
+						onClick={() => void refreshPr(entry.url, true)}
 						disabled={isRefreshing}
 					>
 						<Icon name="rotate-cw" />
@@ -104,12 +104,21 @@ export function PrItem({ entry }: PrItemProps) {
 				<span className="pr-meta-dot">·</span>
 				<span title="Opened">{relativeDate(pr.createdAt)}</span>
 				<span className="pr-meta-dot">·</span>
-				<span className="pr-diff-add" title="Additions">+{pr.additions}</span>
-				<span className="pr-diff-del" title="Deletions">−{pr.deletions}</span>
+				<span className="pr-diff-stats">
+					<span className="pr-diff-add" title="Additions">
+						+{pr.additions}
+					</span>
+					<span className="pr-diff-del" title="Deletions">
+						-{pr.deletions}
+					</span>
+				</span>
 				{pr.comments > 0 && (
 					<>
 						<span className="pr-meta-dot">·</span>
-						<span title="Comments">{pr.comments} {pr.comments === 1 ? 'comment' : 'comments'}</span>
+						<span title="Comments">
+							{pr.comments}{' '}
+							{pr.comments === 1 ? 'comment' : 'comments'}
+						</span>
 					</>
 				)}
 				{pr.lastRefreshedAt && (
@@ -117,16 +126,6 @@ export function PrItem({ entry }: PrItemProps) {
 						<span className="pr-meta-dot">·</span>
 						<span className="pr-synced-at" title="Last synced">
 							{minutesAgo(pr.lastRefreshedAt)}
-						</span>
-					</>
-				)}
-				{pr.ciStatus !== 'none' && (
-					<>
-						<span className="pr-meta-dot">·</span>
-						<span
-							className={`pr-ci-badge pr-ci-badge--${pr.ciStatus}`}
-						>
-							{getCIStatusIcon(pr.ciStatus)} CI
 						</span>
 					</>
 				)}

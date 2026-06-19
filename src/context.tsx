@@ -11,7 +11,7 @@ export type AppContextType = {
 	entries: PREntry[];
 	addPr: (url: string) => Promise<void>;
 	removePr: (url: string) => void;
-	refreshPr: (url: string) => Promise<void>;
+	refreshPr: (url: string, manual?: boolean) => Promise<void>;
 	fetchAll: () => void;
 };
 
@@ -77,17 +77,19 @@ export const AppContextWrapper = ({
 	);
 
 	const refreshPr = useCallback(
-		async (url: string) => {
+		async (url: string, manual = false) => {
 			setEntries((prev) =>
 				prev.map((e) =>
-					e.url === url && e.status === 'loaded'
-						? { ...e, status: 'refreshing', data: e.data }
+					e.url === url &&
+					(e.status === 'loaded' || e.status === 'refreshing')
+						? { ...e, status: 'refreshing' }
 						: e,
 				),
 			);
 
 			const pr = await fetchOne(url);
 			setEntries((prev) => prev.map((e) => (e.url === url ? pr : e)));
+			void manual;
 		},
 		[fetchOne],
 	);
