@@ -10,10 +10,6 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
 	state: State = { error: null };
 
-	static getDerivedStateFromError(error: Error): State {
-		return { error };
-	}
-
 	render() {
 		if (this.state.error) {
 			return (

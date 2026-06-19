@@ -1,18 +1,22 @@
 import { createRoot, Root } from 'react-dom/client';
 import { ItemView, WorkspaceLeaf } from 'obsidian';
-import { GithubClient } from '../github';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { PrListComponent } from '../components/PrListComponent';
+import { PrList } from '../components/PrList';
+import { AppContextWrapper } from '../context';
+import GithubReviewManager from '../main';
+import { GithubClient } from '../github';
 
 export const PR_LIST_VIEW_TYPE = 'github-pr-list';
 
 export class PrListView extends ItemView {
+	private plugin: GithubReviewManager;
 	private github: GithubClient;
 	private root: Root | null = null;
 
-	constructor(leaf: WorkspaceLeaf, github: GithubClient) {
+	constructor(leaf: WorkspaceLeaf, plugin: GithubReviewManager) {
 		super(leaf);
-		this.github = github;
+		this.plugin = plugin;
+		this.github = plugin.github;
 	}
 
 	getViewType(): string {
@@ -30,9 +34,15 @@ export class PrListView extends ItemView {
 	async onOpen(): Promise<void> {
 		this.root = createRoot(this.contentEl);
 		this.root.render(
-			<ErrorBoundary>
-				<PrListComponent github={this.github} app={this.app} />
-			</ErrorBoundary>,
+			<AppContextWrapper
+				app={this.app}
+				plugin={this.plugin}
+				github={this.github}
+			>
+				<ErrorBoundary>
+					<PrList />
+				</ErrorBoundary>
+			</AppContextWrapper>,
 		);
 	}
 

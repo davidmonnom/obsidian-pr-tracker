@@ -1,10 +1,14 @@
-import { Plugin } from 'obsidian';
+import { App, Plugin, PluginManifest } from 'obsidian';
 import { GithubReviewManagerSettingTab, loadToken } from './settings';
 import { GithubClient, PersistedData } from './github';
 import { PrListView, PR_LIST_VIEW_TYPE } from './views/PrListView';
 
 export default class GithubReviewManager extends Plugin {
 	github!: GithubClient;
+
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+	}
 
 	async onload() {
 		const saved = (await this.loadData()) as Partial<PersistedData> | null;
@@ -17,7 +21,7 @@ export default class GithubReviewManager extends Plugin {
 
 		this.registerView(
 			PR_LIST_VIEW_TYPE,
-			(leaf) => new PrListView(leaf, this.github),
+			(leaf) => new PrListView(leaf, this),
 		);
 
 		this.addRibbonIcon(

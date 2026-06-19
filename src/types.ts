@@ -6,4 +6,12 @@ export type PREntry =
 	| { url: string; status: 'error'; error: string }
 	| { url: string; status: 'loaded'; data: PullRequestInfo };
 
-export type LoadedEntry = Extract<PREntry, { status: 'loaded' | 'refreshing' }>;
+export type PRItem = Extract<
+	PREntry,
+	{ status: 'loaded' | 'refreshing' | 'error' }
+>;
+
+export type LoadedPRItem = Extract<
+	PREntry,
+	{ status: 'loaded' | 'refreshing' }
+>;

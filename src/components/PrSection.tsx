@@ -1,19 +1,12 @@
-import { LoadedEntry } from '../types';
-import { LoadedItem } from './LoadedItem';
+import { PRItem } from '../types';
+import { PrItem } from './PrItem';
 
 interface PrSectionProps {
 	title: string;
-	entries: LoadedEntry[];
-	onRefresh: (url: string) => void;
-	onRemove: (url: string) => void;
+	entries: PRItem[];
 }
 
-export function PrSection({
-	title,
-	entries,
-	onRefresh,
-	onRemove,
-}: PrSectionProps) {
+export function PrSection({ title, entries }: PrSectionProps) {
 	return (
 		<div className="pr-list-section">
 			<div className="pr-list-section-header">
@@ -21,12 +14,7 @@ export function PrSection({
 				<span className="pr-list-section-count">{entries.length}</span>
 			</div>
 			{entries.map((e) => (
-				<LoadedItem
-					key={e.url}
-					entry={e}
-					onRefresh={() => onRefresh(e.url)}
-					onRemove={() => onRemove(e.url)}
-				/>
+				<PrItem key={e.url} entry={e} />
 			))}
 		</div>
 	);

@@ -1,20 +1,63 @@
 import { GithubClient } from '../github';
-import { LoadedEntry } from '../types';
+import { useApp } from '../hooks/useApp';
+import { PRItem } from '../types';
 import { relativeDate, minutesAgo } from '../utils/dateUtils';
 import { Icon } from './Icon';
 import { ReviewPills } from './ReviewPills';
 
-interface LoadedItemProps {
-	entry: LoadedEntry;
-	onRefresh: () => void;
-	onRemove: () => void;
+interface PrItemProps {
+	entry: PRItem;
 }
 
-export function LoadedItem({ entry, onRefresh, onRemove }: LoadedItemProps) {
-	const { data: pr } = entry;
+export function PrItem({ entry }: PrItemProps) {
+	const { refreshPr, removePr } = useApp();
+	const parsed = GithubClient.parsePRUrl(entry.url);
 	const isRefreshing = entry.status === 'refreshing';
-	const parsed = GithubClient.parsePRUrl(pr.prUrl);
 
+	if (entry.status === 'error') {
+		const label = parsed
+			? `${parsed.owner}/${parsed.repo} #${parsed.prNumber}`
+			: entry.url;
+
+		return (
+			<div className="pr-list-item pr-list-item--error">
+				<div className="pr-list-item-row1">
+					<span className="pr-state-dot pr-state-dot--error" />
+					<span className="pr-list-item-error-label">{label}</span>
+					<button
+						className="pr-list-icon-btn pr-list-item-action"
+						aria-label="Retry"
+						onClick={() => void refreshPr(entry.url)}
+					>
+						<Icon name="rotate-cw" />
+					</button>
+					<button
+						className="pr-list-icon-btn pr-list-item-action"
+						aria-label="Remove"
+						onClick={() => removePr(entry.url)}
+					>
+						<Icon name="trash-2" />
+					</button>
+				</div>
+				<div className="pr-list-item-error-msg">{entry.error}</div>
+			</div>
+		);
+	}
+
+	const getCIStatusIcon = (ciStatus: string) => {
+		switch (ciStatus) {
+			case 'success':
+				return '✓';
+			case 'failure':
+				return '✗';
+			case 'pending':
+				return '●';
+			default:
+				return '';
+		}
+	};
+
+	const pr = entry.data;
 	return (
 		<div className="pr-list-item">
 			<div className="pr-list-item-row1">
@@ -32,7 +75,7 @@ export function LoadedItem({ entry, onRefresh, onRemove }: LoadedItemProps) {
 					<button
 						className={`pr-list-icon-btn pr-list-item-action${isRefreshing ? ' pr-list-item-action--spinning' : ''}`}
 						aria-label="Refresh"
-						onClick={onRefresh}
+						onClick={() => void refreshPr(entry.url)}
 						disabled={isRefreshing}
 					>
 						<Icon name="rotate-cw" />
@@ -41,7 +84,7 @@ export function LoadedItem({ entry, onRefresh, onRemove }: LoadedItemProps) {
 				<button
 					className="pr-list-icon-btn pr-list-item-action"
 					aria-label="Remove"
-					onClick={onRemove}
+					onClick={() => removePr(entry.url)}
 				>
 					<Icon name="trash-2" />
 				</button>
@@ -74,12 +117,7 @@ export function LoadedItem({ entry, onRefresh, onRemove }: LoadedItemProps) {
 						<span
 							className={`pr-ci-badge pr-ci-badge--${pr.ciStatus}`}
 						>
-							{pr.ciStatus === 'success'
-								? '✓'
-								: pr.ciStatus === 'failure'
-									? '✗'
-									: '●'}{' '}
-							CI
+							{getCIStatusIcon(pr.ciStatus)} CI
 						</span>
 					</>
 				)}
