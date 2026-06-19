@@ -1,7 +1,7 @@
 {
 	"id": "github-pr-tracker",
 	"name": "Github PR Tracker",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "1.11.4",
 	"description": "Track and manage GitHub pull request reviews.",
 	"author": "David Monnom",
