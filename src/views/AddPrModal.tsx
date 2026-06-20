@@ -33,7 +33,7 @@ function AddPrForm({ existingUrls, onAdd, onClose }: AddPrFormProps) {
 	};
 
 	return (
-		<>
+		<form onSubmit={(e) => { e.preventDefault(); void submit(); }}>
 			<h2>Add GitHub pull request</h2>
 			<label htmlFor="pr-add-modal-url" className="pr-modal-label">
 				Pull request URL
@@ -46,17 +46,14 @@ function AddPrForm({ existingUrls, onAdd, onClose }: AddPrFormProps) {
 				placeholder="https://github.com/owner/repo/pull/123"
 				value={url}
 				onChange={(e) => setUrl(e.target.value)}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter') void submit();
-				}}
 			/>
 			<div className="pr-modal-buttons">
-				<button onClick={onClose}>Cancel</button>
-				<button className="mod-cta" onClick={() => void submit()}>
+				<button type="button" onClick={onClose}>Cancel</button>
+				<button type="submit" className="mod-cta">
 					Add
 				</button>
 			</div>
-		</>
+		</form>
 	);
 }
 
