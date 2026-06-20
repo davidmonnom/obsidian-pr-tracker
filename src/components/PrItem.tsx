@@ -1,7 +1,8 @@
 import { GithubClient } from '../github';
 import { useApp } from '../hooks/useApp';
+import { useTimer } from '../hooks/useTimer';
 import { PRItem } from '../types';
-import { relativeDate, minutesAgo } from '../utils/dateUtils';
+import { relativeDate } from '../utils/dateUtils';
 import { Icon } from './Icon';
 import { ReviewPills } from './ReviewPills';
 
@@ -13,6 +14,11 @@ export function PrItem({ entry }: PrItemProps) {
 	const { refreshPr, removePr } = useApp();
 	const parsed = GithubClient.parsePRUrl(entry.url);
 	const isRefreshing = entry.status === 'refreshing';
+	const { timeLabel, diffMs } = useTimer(
+		entry.status === 'loaded' || entry.status === 'refreshing'
+			? entry.data.lastRefreshedAt
+			: null,
+	);
 
 	if (entry.status === 'error') {
 		const label = parsed
@@ -44,8 +50,8 @@ export function PrItem({ entry }: PrItemProps) {
 		);
 	}
 
+	const isMoreThanMin = diffMs > 60 * 1000;
 	const pr = entry.data;
-
 	const ciLabel =
 		pr.ciStatus === 'success'
 			? '✓ CI'
@@ -65,6 +71,9 @@ export function PrItem({ entry }: PrItemProps) {
 				>
 					{pr.title}
 				</a>
+				{entry.changed && !isMoreThanMin && (
+					<span className={`pr-change-badge`}>Updated</span>
+				)}
 				<ReviewPills reviewers={pr.reviewers} />
 				{pr.ciStatus !== 'none' && (
 					<span className={`pr-ci-badge pr-ci-badge--${pr.ciStatus}`}>
@@ -125,7 +134,7 @@ export function PrItem({ entry }: PrItemProps) {
 					<>
 						<span className="pr-meta-dot">·</span>
 						<span className="pr-synced-at" title="Last synced">
-							{minutesAgo(pr.lastRefreshedAt)}
+							{timeLabel}
 						</span>
 					</>
 				)}

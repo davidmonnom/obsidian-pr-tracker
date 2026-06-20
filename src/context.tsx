@@ -34,7 +34,7 @@ export const AppContextWrapper = ({
 		github.getTrackedPRs().map((url) => {
 			const cached = github.getCached(url);
 			return cached
-				? { url, status: 'loaded', data: cached }
+				? { url, status: 'loaded', data: cached, changed: false }
 				: { url, status: 'loading' };
 		}),
 	);
@@ -58,13 +58,22 @@ export const AppContextWrapper = ({
 			}
 
 			try {
+				let up = false;
+				const cache = getPrByUrl(url);
 				const data = await github.fetchPullRequest(
 					parsed.owner,
 					parsed.repo,
 					parsed.prNumber,
 				);
 
-				return { url, status: 'loaded', data };
+				if (cache && cache.status === 'loaded') {
+					const dataCopy = { ...data };
+					const oldData = cache.data;
+					dataCopy.lastRefreshedAt = oldData.lastRefreshedAt;
+					up = JSON.stringify(oldData) !== JSON.stringify(dataCopy);
+				}
+
+				return { url, status: 'loaded', data, changed: up };
 			} catch (err) {
 				return {
 					url,
@@ -73,7 +82,7 @@ export const AppContextWrapper = ({
 				};
 			}
 		},
-		[github],
+		[github, getPrByUrl],
 	);
 
 	const refreshPr = useCallback(

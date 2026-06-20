@@ -239,7 +239,7 @@
 /* Row 1: dot + title + refresh button */
 .pr-list-item-row1 {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 6px;
 }
 
@@ -352,6 +352,20 @@
 .pr-diff-del {
 	color: #f85149;
 	font-weight: 500;
+}
+
+/* ── Changed status badge ──────────────────────────────────────────────────── */
+
+.pr-change-badge {
+	font-size: 10px;
+	font-weight: 600;
+	padding: 1px 5px;
+	border-radius: 10px;
+	line-height: 1.6;
+	white-space: nowrap;
+	flex-shrink: 0;
+	background: rgba(187, 128, 9, 0.1);
+	color: #d29922;
 }
 
 /* ── CI status badge ───────────────────────────────────────────────────────── */
