@@ -10,7 +10,7 @@ src/
 ├── github.ts                      # GithubClient: owns tracked PRs, cache, and persistence. Types: PullRequestInfo, ReviewerInfo, ParsedPRUrl, CIStatus, PersistedData
 ├── settings.ts                    # SettingTab (token UI only), loadToken()
 ├── types.ts                       # Shared React types: PREntry (loading/refreshing/loaded/error), PRItem, LoadedPRItem
-├── context.tsx                    # AppContext + AppContextWrapper (owns all React state/logic) + AppContextType
+├── context.tsx                    # AppContext + AppContextWrapper (owns all React state/logic) + AppContextType + ActionBridge
 │
 ├── components/                    # Pure React components (no Obsidian ItemView/Modal)
 │   ├── ErrorBoundary.tsx          # Class component error boundary wrapping PrList
@@ -24,7 +24,7 @@ src/
 │   └── useApp.ts                  # useApp() — returns AppContextType from AppContext
 │
 ├── views/                         # Obsidian-specific shells (ItemView, Modal)
-│   ├── PrListView.tsx             # ItemView that mounts AppContextWrapper + PrList; exports PR_LIST_VIEW_TYPE
+│   ├── PrListView.tsx             # ItemView that mounts AppContextWrapper + PrList; registers header actions via addAction(); exports PR_LIST_VIEW_TYPE
 │   └── AddPrModal.tsx             # Modal to validate and submit a new PR URL
 │
 └── utils/
@@ -52,7 +52,8 @@ src/
 - `addPR`/`removePR`/`fetchPullRequest` all call an internal `notify()` which fires the `onDataChange` callback — `main.ts` passes `(data) => void this.saveData(data)` to persist the full state to `data.json` on every change.
 - **`AppContextWrapper` is the React state source of truth** — defined in `context.tsx`, it owns all component state (`entries`) and all data-fetching logic (`fetchOne`, `fetchAll`, `addPr`, `removePr`, `refreshPr`). It exposes everything via `AppContext`.
 - **`useApp()` hook** — any component can call `useApp()` to access the full `AppContextType`: `{ app, plugin, github, entries, addPr, removePr, refreshPr, fetchAll }`. No prop drilling anywhere.
-- `PrListView` takes `(leaf, plugin: GithubReviewManager)`. It wraps the React tree in `<AppContextWrapper app plugin github>` and mounts `<PrList />` inside. `PrList` takes zero props.
+- `PrListView` takes `(leaf, plugin: GithubReviewManager)`. It wraps the React tree in `<AppContextWrapper app plugin github actionBridge>` and mounts `<PrList />` inside. `PrList` takes zero props.
+- **`ActionBridge`** (`context.tsx`) — a plain mutable object `{ addPr, fetchAll }` shared between `PrListView` and `AppContextWrapper`. `PrListView` creates it and passes it to both `addAction()` callbacks and `AppContextWrapper`; the wrapper writes the live React callbacks into it via `useEffect`. This lets Obsidian's native header buttons (outside the React tree) invoke React state logic without coupling the view to context internals.
 - `plugin` is typed as `GithubReviewManager` (not the base `Plugin` class) in `AppContextType` to preserve type safety for `plugin.github` and other plugin-specific properties.
 - The cache persists across Obsidian restarts (stored in `data.json` as `prCache`). On startup, `GithubClient` is initialised with the saved `PersistedData`. Closed PRs therefore load instantly from cache and are never re-fetched.
 - GitHub token is stored in Obsidian's `secretStorage` (system keychain), never in `data.json`.
@@ -67,14 +68,22 @@ src/
 Each loaded PR renders as two rows:
 
 ```
-Row 1: [state-dot] [title] [ReviewPill] [refresh-btn?] [remove-btn]
-Row 2: [repo · #n · author · date · synced-time · (· CI badge if not 'none')]
+Row 1: [state-dot] [title] [ReviewPill] [CI badge?] [refresh-btn?] [remove-btn]
+Row 2: [repo → baseBranch · #n · author · date · +add -del · comments? · synced-time]
 ```
 
 - Refresh button is hidden for closed PRs.
 - Review pill shows only the dominant state (changes-requested beats approved beats pending).
 - CI badge colors: success → green, failure → red, pending → yellow.
 - Synced time shows `minutesAgo(pr.lastRefreshedAt)` — set by `GithubClient.fetchPullRequest` on every successful fetch.
+- `baseBranch` (`pr.base.ref` from GitHub API) is shown between the repo name and PR number.
+
+## Filter bar
+
+`PrList` renders a plain `<input>` at the top (visible when at least one PR is tracked). Filtering is optimised with two memos:
+
+- **`searchIndex`** (`useMemo` on `entries`) — pre-computes one lowercased string per entry (title + author + baseBranch + owner/repo joined). Only reruns when entries change, not on keystrokes.
+- **`visibleEntries`** (`useMemo` on `deferredFilter + searchIndex`) — filters the index. `useDeferredValue` defers query updates so keystrokes are never blocked by filtering work.
 
 ## Build
 
