@@ -66,28 +66,7 @@
 	overflow: hidden;
 }
 
-/* Header */
-.pr-list-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 8px 8px 8px 14px;
-	flex-shrink: 0;
-}
-
-.pr-list-header-title {
-	font-size: var(--font-ui-small);
-	font-weight: 600;
-	color: var(--text-normal);
-}
-
-.pr-list-header-actions {
-	display: flex;
-	align-items: center;
-	gap: 2px;
-}
-
-/* Icon buttons — header and per-item hover */
+/* Icon buttons — per-item hover */
 .pr-list-icon-btn {
 	display: flex;
 	align-items: center;

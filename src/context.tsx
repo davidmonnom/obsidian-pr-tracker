@@ -1,4 +1,10 @@
-import { createContext, useState, ReactNode, useCallback } from 'react';
+import {
+	createContext,
+	useState,
+	ReactNode,
+	useCallback,
+	useEffect,
+} from 'react';
 import { App } from 'obsidian';
 import { GithubClient } from './github';
 import { PREntry } from './types';
@@ -15,12 +21,18 @@ export type AppContextType = {
 	fetchAll: () => void;
 };
 
+export interface ActionBridge {
+	addPr: ((url: string) => Promise<void>) | null;
+	fetchAll: (() => void) | null;
+}
+
 export const AppContext = createContext({} as AppContextType);
 
 interface AppContextWrapper {
 	app: App;
 	plugin: GithubReviewManager;
 	github: GithubClient;
+	actionBridge?: ActionBridge;
 	children: ReactNode;
 }
 
@@ -28,6 +40,7 @@ export const AppContextWrapper = ({
 	app,
 	plugin,
 	github,
+	actionBridge,
 	children,
 }: AppContextWrapper) => {
 	const [entries, setEntries] = useState<PREntry[]>(() =>
@@ -136,6 +149,15 @@ export const AppContextWrapper = ({
 		},
 		[github],
 	);
+
+	useEffect(() => {
+		if (!actionBridge) {
+			return;
+		}
+
+		actionBridge.addPr = addPr;
+		actionBridge.fetchAll = fetchAll;
+	}, [actionBridge, addPr, fetchAll]);
 
 	return (
 		<AppContext.Provider

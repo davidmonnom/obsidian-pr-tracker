@@ -1,16 +1,9 @@
-import { useCallback } from 'react';
 import { PREntry, LoadedPRItem } from '../types';
-import { Icon } from './Icon';
 import { PrSection } from './PrSection';
-import { AddPrModal } from '../views/AddPrModal';
 import { useApp } from '../hooks/useApp';
 
 export function PrList() {
-	const { app, github, entries, addPr, fetchAll } = useApp();
-
-	const openAddModal = useCallback(() => {
-		new AddPrModal(app, github.getTrackedPRs(), addPr).open();
-	}, [app, github, addPr]);
+	const { entries } = useApp();
 
 	const byUpdated = (a: LoadedPRItem, b: LoadedPRItem) =>
 		b.data.updatedAt.localeCompare(a.data.updatedAt);
@@ -42,38 +35,10 @@ export function PrList() {
 
 	return (
 		<div className="pr-list-root">
-			<div className="pr-list-header">
-				<span className="pr-list-header-title">
-					GitHub pull requests
-				</span>
-				<div className="pr-list-header-actions">
-					<button
-						className="pr-list-icon-btn"
-						aria-label="Add pull request"
-						onClick={openAddModal}
-					>
-						<Icon name="plus" />
-					</button>
-					<button
-						className="pr-list-icon-btn"
-						aria-label="Refresh all"
-						onClick={() => fetchAll()}
-					>
-						<Icon name="rotate-cw" />
-					</button>
-				</div>
-			</div>
-
 			<div className="pr-list-body">
 				{entries.length === 0 && (
 					<div className="pr-list-empty">
 						<div>No pull requests tracked yet.</div>
-						<button
-							className="pr-list-empty-btn"
-							onClick={openAddModal}
-						>
-							Add a pull request
-						</button>
 					</div>
 				)}
 
