@@ -92,6 +92,27 @@
 	height: 13px;
 }
 
+/* Filter bar */
+.pr-list-filter-input {
+	display: block;
+	width: calc(100% - 20px);
+	box-sizing: border-box;
+	margin: 0px 10px;
+	padding: 5px 10px;
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	outline: none;
+	box-shadow: none;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.pr-list-filter-input::placeholder {
+	color: var(--text-faint);
+}
+
 /* Body */
 .pr-list-body {
 	flex: 1;
