@@ -104,6 +104,10 @@ export function PrItem({ entry }: PrItemProps) {
 						<span className="pr-list-item-repo">
 							{parsed.owner}/{parsed.repo}
 						</span>
+						<span className="pr-meta-dot">→</span>
+						<span className="pr-base-branch" title="Target branch">
+							{pr.baseBranch}
+						</span>
 						<span className="pr-meta-dot">·</span>
 						<span>#{parsed.prNumber}</span>
 						<span className="pr-meta-dot">·</span>

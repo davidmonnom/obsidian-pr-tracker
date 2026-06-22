@@ -29,6 +29,7 @@ interface GithubPR {
 	comments: number;
 	review_comments: number;
 	head: { sha: string };
+	base: { ref: string };
 }
 
 interface GithubCombinedStatus {
@@ -49,6 +50,7 @@ export interface PullRequestInfo {
 	title: string;
 	state: string;
 	author: string;
+	baseBranch: string;
 	createdAt: string;
 	updatedAt: string;
 	lastRefreshedAt: string;
@@ -238,6 +240,7 @@ export class GithubClient {
 			title: pr.title,
 			state: pr.state,
 			author: pr.user.login,
+			baseBranch: pr.base.ref,
 			createdAt: pr.created_at,
 			updatedAt: pr.updated_at,
 			lastRefreshedAt: new Date().toISOString(),
